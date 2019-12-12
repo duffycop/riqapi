@@ -76,6 +76,39 @@ function loginUser(req, res){
   })
 }
 
+function logoutUser(req, res){
+  var params = req.body;
+  var email = params.email;
+  var password = params.password;
+
+  User.findOne({email: email.toLowerCase()}, (err, user) => {
+    if(err){
+      res.status(500).send({message: 'Error en la peticion'});
+    }else{
+      if(!user){
+        res.status(200).send({message: 'El usuario o la contraseña son incorrectos'});
+      }else{
+        //Comprobar contrasenia
+        bcrypt.compare(password, user.password, function(err, check){
+          if(check){
+            //devolver datos del usuario logueado
+            if(params.gethash){
+              //devolver un token de jwt
+              res.status(200).send({
+                token: jwt.deleteToken(user)
+              });
+            }else{
+              res.status(200).send({user});
+            }
+          }else {
+            res.status(200).send({message: 'El usuario o la contraseña son incorrectos'});
+          }
+        })
+      }
+    }
+  })
+}
+
 function updateUser(req, res){
   var userId = req.params.id;
   var update = req.body;
@@ -146,6 +179,7 @@ function getImageFile(req, res){
 module.exports = {
   saveUser,
   loginUser,
+  logoutUser,
   updateUser,
   uploadImage,
   getImageFile
